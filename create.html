@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Create Appointment</h1>
+    <form id="form">
+        <label for="name">Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label for="number">Phone Number:</label><br>
+        <input type="tel" name="number" required><br><br>
+
+        <label for="date">Date:</label><br>
+        <input type="date" name="date" required><br><br>
+
+        <label for="hour">Time:</label><br>
+        <input type="text" name="time" required><br><br>
+
+        <label for="symptoms">Symptoms:</label>
+        <textarea name="symptoms" required></textarea><br><br>
+
+        <input type="submit" name="submit">
+    </form>
+
+    <script>
+        const electron = require("electron");
+        const {ipcRenderer} = electron;
+        
+
+        const form = document.getElementById("form");
+        const elements = {};
+
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+
+            for(let i = 0; i < form.elements.length; i++) {
+                if (form.elements[i].type !== "submit") {
+                    elements[form.elements[i].name] = form.elements[i].value;
+                }
+                ipcRenderer.send("appointment:create", elements);
+            }
+            
+        });
+    </script>
+</body>
+</html>
