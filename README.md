@@ -1,51 +1,81 @@
-Doctor Appointment Manager (Electron App)
-A cross-platform desktop application built with Electron for managing doctor appointments. This modern and user-friendly app allows you to create, view, edit, delete, and filter appointments with persistent storage on disk.
+# 🩺 Doctor Appointment Manager (Electron App)
 
-✨ Features
-📝 Create Appointment
-Fill out a form with:
+A modern, cross-platform desktop application built with Electron for managing doctor appointments. This user-friendly app allows you to create, view, edit, delete, and filter appointments — all with persistent local storage.
 
-Name
+---
 
-Phone Number
+## ✨ Features
 
-Date
+### 📝 Create Appointment
+- Fill out a form with:
+  - Name
+  - Phone Number
+  - Date
+  - Time
+  - Symptoms
+- On submission:
+  - Checks for existing appointments within ±15 minutes on the same date.
+  - Displays an error if a conflict exists.
+  - Saves the appointment and shows a success message if no conflict is found.
 
-Time
+### 📋 View Appointments
+- Scrollable and responsive list of all appointments.
+- Real-time updates when appointments are added, edited, or deleted.
 
-Symptoms
+### ✏️ Edit Appointment
+- Each appointment has an **Edit** button.
+- Opens a modal with pre-filled fields.
+- Enforces the 15-minute conflict rule on update.
 
-Automatically checks for any existing appointment within ±15 minutes on the same date.
+### ❌ Delete Appointment
+- Each appointment has a **Delete** button.
+- Prompts for confirmation before deletion.
+- Removes the appointment from the list and disk.
 
-Shows an error if a time conflict exists, otherwise saves with a success message.
+### 🔍 Search & Filter
+- Real-time filtering by:
+  - Name
+  - Date
+  - Symptoms
 
-📋 View Appointments
-Scrollable, responsive list of all appointments.
+### 💾 Persistent Storage
+- Appointments are stored in a local `appointments.json` file.
+- Data is retained across sessions.
 
-Live updates as appointments are added, edited, or deleted.
+---
 
-✏️ Edit Appointment
-Each appointment includes an Edit button.
+## ⚙️ Tech Stack
 
-Opens a modal with pre-filled details.
+| Technology     | Purpose                                         |
+|----------------|-------------------------------------------------|
+| Electron       | Cross-platform desktop app framework            |
+| HTML           | Frontend structure                              |
+| CSS            | Responsive and modern UI styling                |
+| JavaScript     | Core logic and interactivity                    |
+| Node.js        | Backend logic within Electron's main process    |
+| Electron IPC   | Secure communication between frontend and backend |
+| JSON File      | Persistent local storage for appointments       |
 
-Enforces the 15-minute conflict rule on update.
+---
 
-❌ Delete Appointment
-Each appointment includes a Delete button.
+## 🧠 Conflict Handling Logic
 
-Confirms and removes the appointment from list and disk.
+- No two appointments are allowed within **15 minutes** (before or after) on the same date.
+- This rule is enforced during both:
+  - Appointment creation
+  - Appointment editing
 
-🔍 Search & Filter
-Real-time filtering of appointments by:
+---
 
-Name
+## 🚀 Getting Started
 
-Date
+### Prerequisites
+- [Node.js](https://nodejs.org/)
+- [Git](https://git-scm.com/)
 
-Symptoms
+### Installation
 
-💾 Persistent Storage
-All appointments are saved to a local appointments.json file.
-
-Data persists across app restarts.
+```bash
+git clone https://github.com/your-username/doctor-appointment-manager.git
+cd doctor-appointment-manager
+npm install
