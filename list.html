@@ -3,8 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 30px;
+        }
+        #appointments {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0;
+            list-style: none;
+        }
+        #appointments li {
+            background: #fff;
+            margin-bottom: 18px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 18px 24px;
+            font-size: 1.1em;
+            color: #444;
+            transition: box-shadow 0.2s;
+        }
+        #appointments li:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+    </style>
 </head>
 <body>
     <h1>List Window</h1>
+    <input type="text" id="filter" placeholder="Filter by name, date, or symptoms..." style="display:block;margin:20px auto 0 auto;max-width:600px;width:90%;padding:10px;border-radius:6px;border:1px solid #ddd;font-size:1em;">
+    <ul id="appointments"></ul>
+    <div id="edit-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);align-items:center;justify-content:center;z-index:10;">
+      <form id="edit-form" style="background:#fff;padding:24px 32px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.15);display:flex;flex-direction:column;min-width:300px;max-width:90vw;">
+        <h2 style="margin-bottom:18px;">Edit Appointment</h2>
+        <label>Name: <input type="text" name="name" required></label>
+        <label>Phone: <input type="tel" name="number" required></label>
+        <label>Date: <input type="date" name="date" required></label>
+        <label>Time: <input type="time" name="time" required></label>
+        <label>Symptoms: <textarea name="symptoms" required></textarea></label>
+        <div style="display:flex;gap:10px;margin-top:18px;">
+          <button type="submit" style="flex:1;background:#27ae60;color:#fff;border:none;padding:10px 0;border-radius:6px;font-weight:bold;cursor:pointer;">Save</button>
+          <button type="button" id="cancel-edit" style="flex:1;background:#c0392b;color:#fff;border:none;padding:10px 0;border-radius:6px;font-weight:bold;cursor:pointer;">Cancel</button>
+        </div>
+        <div id="edit-message" style="margin-top:10px;text-align:center;font-weight:bold;"></div>
+      </form>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+        const appointmentsList = document.getElementById('appointments');
+        const filterInput = document.getElementById('filter');
+        let allAppointments = [];
+        let editingIndex = null;
+
+        function renderAppointments(list) {
+            appointmentsList.innerHTML = '';
+            list.forEach((app, idx) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<b>Name:</b> ${app.name}, <b>Phone:</b> ${app.number}, <b>Date:</b> ${app.date}, <b>Time:</b> ${app.time}, <b>Symptoms:</b> ${app.symptoms}
+                <br><button data-edit="${idx}" style="margin-top:8px;margin-right:8px;background:#f6d365;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-weight:bold;">Edit</button>
+                <button data-delete="${idx}" style="margin-top:8px;background:#fda085;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-weight:bold;">Delete</button>`;
+                appointmentsList.appendChild(li);
+            });
+        }
+
+        ipcRenderer.on('appointments:data', (event, appointments) => {
+            allAppointments = appointments;
+            applyFilter();
+        });
+
+        appointmentsList.addEventListener('click', e => {
+            if (e.target.dataset.edit !== undefined) {
+                openEditModal(Number(e.target.dataset.edit));
+            } else if (e.target.dataset.delete !== undefined) {
+                if (confirm('Delete this appointment?')) {
+                    ipcRenderer.send('appointment:delete', Number(e.target.dataset.delete));
+                }
+            }
+        });
+
+        filterInput.addEventListener('input', applyFilter);
+        function applyFilter() {
+            const q = filterInput.value.trim().toLowerCase();
+            if (!q) {
+                renderAppointments(allAppointments);
+                return;
+            }
+            const filtered = allAppointments.filter(app =>
+                app.name.toLowerCase().includes(q) ||
+                app.date.toLowerCase().includes(q) ||
+                app.symptoms.toLowerCase().includes(q)
+            );
+            renderAppointments(filtered);
+        }
+
+        // Edit modal logic
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-form');
+        const editMessage = document.getElementById('edit-message');
+        document.getElementById('cancel-edit').onclick = () => {
+            editModal.style.display = 'none';
+            editMessage.textContent = '';
+        };
+        function openEditModal(idx) {
+            editingIndex = idx;
+            const app = allAppointments[idx];
+            editForm.name.value = app.name;
+            editForm.number.value = app.number;
+            editForm.date.value = app.date;
+            editForm.time.value = app.time;
+            editForm.symptoms.value = app.symptoms;
+            editModal.style.display = 'flex';
+            editMessage.textContent = '';
+        }
+        editForm.onsubmit = function(e) {
+            e.preventDefault();
+            const updated = {
+                name: editForm.name.value,
+                number: editForm.number.value,
+                date: editForm.date.value,
+                time: editForm.time.value,
+                symptoms: editForm.symptoms.value
+            };
+            ipcRenderer.send('appointment:edit', { index: editingIndex, updated });
+        };
+        ipcRenderer.on('appointment:result', (event, result) => {
+            if (editModal.style.display === 'flex') {
+                if (result.success) {
+                    editMessage.style.color = '#27ae60';
+                    editMessage.textContent = 'Appointment updated!';
+                    setTimeout(() => {
+                        editModal.style.display = 'none';
+                        editMessage.textContent = '';
+                    }, 800);
+                } else {
+                    editMessage.style.color = '#c0392b';
+                    editMessage.textContent = result.message || 'Could not update.';
+                }
+            }
+        });
+        // Request appointments when the window loads
+        window.onload = () => {
+            ipcRenderer.send('appointments:request');
+        };
+    </script>
 </body>
 </html>
