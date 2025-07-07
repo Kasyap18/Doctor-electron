@@ -3,6 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 30px;
+        }
+        form {
+            background: #fff;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 32px 28px 24px 28px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="tel"], input[type="date"], input[type="time"], textarea {
+            padding: 10px;
+            margin-bottom: 18px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            background: #fafafa;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, input[type="tel"]:focus, input[type="date"]:focus, input[type="time"]:focus, textarea:focus {
+            border: 1.5px solid #fda085;
+            outline: none;
+        }
+        textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        input[type="submit"] {
+            background: linear-gradient(90deg, #f6d365 0%, #fda085 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 0;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        input[type="submit"]:hover {
+            background: linear-gradient(90deg, #fda085 0%, #f6d365 100%);
+        }
+    </style>
 </head>
 <body>
     <h1>Create Appointment</h1>
@@ -17,33 +77,46 @@
         <input type="date" name="date" required><br><br>
 
         <label for="hour">Time:</label><br>
-        <input type="text" name="time" required><br><br>
+        <input type="time" name="time" required><br><br>
 
         <label for="symptoms">Symptoms:</label>
         <textarea name="symptoms" required></textarea><br><br>
 
         <input type="submit" name="submit">
     </form>
+    <div id="message" style="max-width:400px;margin:20px auto 0 auto;text-align:center;font-weight:bold;"></div>
 
     <script>
         const electron = require("electron");
         const {ipcRenderer} = electron;
+       
         
-
         const form = document.getElementById("form");
-        const elements = {};
-
+        const messageDiv = document.getElementById("message");
+    
         form.addEventListener("submit", event => {
             event.preventDefault();
-
+            console.log("inside submit event");
+            
+            const elements = {};
             for(let i = 0; i < form.elements.length; i++) {
                 if (form.elements[i].type !== "submit") {
                     elements[form.elements[i].name] = form.elements[i].value;
                 }
-                ipcRenderer.send("appointment:create", elements);
             }
-            
+            ipcRenderer.send('appointment:create', elements);
         });
-    </script>
+
+        ipcRenderer.on('appointment:result', (event, result) => {
+            if (result.success) {
+                messageDiv.style.color = '#27ae60';
+                messageDiv.textContent = 'Appointment Successful!';
+                form.reset();
+            } else {
+                messageDiv.style.color = '#c0392b';
+                messageDiv.textContent = result.message || 'Appointment could not be created.';
+            }
+        });
+    </script>    
 </body>
 </html>
